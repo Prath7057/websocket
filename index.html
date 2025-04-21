@@ -1,69 +1,230 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>WebSocket Group Chat</title>
+    <title>Chat</title>
+    <link rel="icon" href="https://img.icons8.com/emoji/48/speech-balloon.png" type="image/png">
+
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      h2 {
+        text-align: center;
+        margin: 20px 0 10px;
+      }
+      #chat-section {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 600px;
+        max-width: 800px; /* Increased width */
+        margin: auto;
+        background-color: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 80vh;
+      }
+      #chat {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column-reverse; /* Newest messages at the bottom */
+        flex: 1;
+      }
+      #chat li {
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 10px;
+        max-width: 70%;
+        word-wrap: break-word;
+      }
+      #chat li.sender {
+        background-color: #a9d8ff;
+        margin-left: auto;
+        text-align: right;
+        margin-right: 10px;
+      }
+
+      .sender_user {
+        background-color: #c3e17c;
+        padding:10px;
+        border-radius: 10px;;
+      }
+      #chat li.other {
+        background-color: #e0e0e0;
+        margin-right: auto;
+      }
+      #input-section {
+        display: flex;
+        margin-top: 10px;
+      }
+      #message {
+        width: 90%; /* Wider input */
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      button {
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      #username-selection {
+        text-align: center;
+        margin: 20px;
+      }
+      #username-selection select,
+      #username-selection button {
+        padding: 10px;
+        font-size: 16px;
+      }
+      #sender-name {
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+    </style>
   </head>
   <body>
-    <h2>PPP Chat</h2>
+    <!-- Username Selection -->
+    <div id="username-selection">
+      <label for="username">Select Name: </label>
+      <select id="username">
+        <option selected>Select Name</option>
+        <option value="Prathamesh">Prathamesh</option>
+        <option value="Prashant">Prashant</option>
+        <option value="Prem">Prem</option>
+        <option value="Omkar">Omkar</option>
+        <option value="Atul">Atul</option>
+        <option value="Harshal">Harshal</option>
+      </select>
+      <button onclick="setUsername()">Set Username</button>
+    </div>
 
-    <label for="username">Select Name: </label>
-    <select id="username">
-      <option selected>Select Name</option>
-      <option value="Prathamesh">Prathamesh</option>
-      <option value="Prashant">Prashant</option>
-      <option value="Prem">Prem</option>
-      <option value="Akshay">Akshay</option>
-    </select>
+    <!-- Chat Section -->
+    <div id="chat-section" style="display:none;">
+      <div id="sender-name" class="sender_user"></div>
 
-    <input type="text" id="message" placeholder="Type a message..." />
-    <button onclick="sendMessage()">Send</button>
+      <ul id="chat"></ul>
 
-    <ul id="chat"></ul>
+      <!-- Input Section at Bottom -->
+      <div id="input-section">
+        <input type="text" id="message" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <input type="hidden" id="stored-username" />
 
     <script>
-      const socket = new WebSocket("ws://192.168.204.15:8888");
+      const socket = new WebSocket("ws://192.168.1.17:8888");
 
       window.onload = function () {
+        const storedUsername = localStorage.getItem('username');
+        if (storedUsername) {
+          document.getElementById('stored-username').value = storedUsername;
+          document.getElementById('username-selection').style.display = 'none';
+          document.getElementById('chat-section').style.display = 'flex';
+          document.getElementById('sender-name').textContent = storedUsername;
+          fetchMessages();
+        }
+      };
+
+      function setUsername() {
+        const username = document.getElementById("username").value;
+        if (username !== "Select Name") {
+          localStorage.setItem('username', username);
+          document.getElementById('stored-username').value = username;
+          document.getElementById('username-selection').style.display = 'none';
+          document.getElementById('chat-section').style.display = 'flex';
+          document.getElementById('sender-name').textContent = username;
+          fetchMessages();
+        } else {
+          alert("Please select a valid username.");
+        }
+      }
+
+      function fetchMessages() {
         fetch("get_messages.php")
           .then((response) => response.json())
           .then((data) => {
             const chat = document.getElementById("chat");
-            data.forEach((item) => {
+            chat.innerHTML = "";
+            data.reverse().forEach((item) => {
               const li = document.createElement("li");
-              li.textContent = `${item.sender}: ${item.message}`;
+              if (item.sender === document.getElementById('stored-username').value) {
+                li.classList.add('sender');
+                li.textContent = item.message;
+              } else {
+                li.classList.add('other');
+                li.innerHTML = `<strong>${item.sender}:</strong> ${item.message}`;
+              }
               chat.appendChild(li);
             });
           });
-      };
-
-      socket.onopen = function () {};
+      }
 
       socket.onmessage = function (event) {
         const li = document.createElement("li");
-        li.textContent = event.data;
-        document.getElementById("chat").appendChild(li);
+        const messageData = event.data.split(": ");
+        const sender = messageData[0];
+        const message = messageData[1];
+
+        if (sender === document.getElementById('stored-username').value) {
+          li.classList.add('sender');
+          li.textContent = message;
+        } else {
+          li.classList.add('other');
+          li.innerHTML = `<strong>${sender}:</strong> ${message}`;
+        }
+
+        document.getElementById("chat").prepend(li);
       };
 
       function sendMessage() {
         const msg = document.getElementById("message").value;
-        const sender = document.getElementById("username").value;
+        const sender = document.getElementById("stored-username").value;
 
-        if (socket.readyState === WebSocket.OPEN) {
+        if (msg && socket.readyState === WebSocket.OPEN) {
+          socket.send(`${sender}: ${msg}`);
+
+          fetch("save_message.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `sender=${sender}&message=${msg}`,
+          });
+
           const li = document.createElement("li");
-          li.textContent = sender + ": " + msg;
-          document.getElementById("chat").appendChild(li);
-          socket.send(sender + ": " + msg);
+          li.classList.add('sender');
+          li.textContent = msg;
+          document.getElementById("chat").prepend(li);
         }
+
         document.getElementById("message").value = "";
       }
 
-      document
-        .getElementById("message")
-        .addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            sendMessage();
-          }
-        });
+      document.getElementById("message").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      });
     </script>
   </body>
 </html>

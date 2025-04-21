@@ -8,41 +8,28 @@ use Ratchet\Http\HttpServer;
 use Ratchet\WebSocket\WsServer;
 
 class Chat implements MessageComponentInterface {
-    protected $clients;
-    protected $db;
-
-    public function __construct() {
-        $this->clients = new \SplObjectStorage;
-        $this->db = new mysqli('localhost', 'root', '', 'websocket_demo');
-    }
-
     public function onOpen(ConnectionInterface $conn) {
-        $this->clients->attach($conn);
+        echo "New connection: {$conn->resourceId}\n";
     }
 
     public function onMessage(ConnectionInterface $from, $msg) {
-        if (strpos($msg, ": ") !== false) {
-            list($sender, $message) = explode(": ", $msg, 2);
-            $stmt = $this->db->prepare("INSERT INTO chat_messages (sender, message) VALUES (?, ?)");
-            if ($stmt) {
-                $stmt->bind_param("ss", $sender, $message);
-                $stmt->execute();
-                $stmt->close();
-            }
+        foreach ($from->httpRequest->getHeaders() as $header => $values) {
+            echo "$header: " . implode(', ', $values) . "\n";
         }
-
-        foreach ($this->clients as $client) {
-            if ($from !== $client) {
-                $client->send($msg);
-            }
-        }
+        echo "Message: $msg\n";
+        // foreach ($from->getAllConnections() as $client) {
+        //     if ($client !== $from) {
+        //         $client->send($msg);
+        //     }
+        // }
     }
 
     public function onClose(ConnectionInterface $conn) {
-        $this->clients->detach($conn);
+        echo "Connection {$conn->resourceId} has disconnected\n";
     }
 
     public function onError(ConnectionInterface $conn, \Exception $e) {
+        echo "Error: {$e->getMessage()}\n";
         $conn->close();
     }
 }
@@ -53,8 +40,9 @@ $server = IoServer::factory(
             new Chat()
         )
     ),
-    8888,
-    '0.0.0.0'
+    8888
 );
 
 $server->run();
+
+?>

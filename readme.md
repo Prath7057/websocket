@@ -29,3 +29,4 @@ To run this application on your local machine:
    ```bash
    git clone https://github.com/yourusername/chat-app.git
    cd chat-app
+   

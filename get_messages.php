@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
+
 $conn = new mysqli('localhost', 'root', '', 'websocket_demo');
+
 if ($conn->connect_error) {
     die(json_encode(['error' => $conn->connect_error]));
 }

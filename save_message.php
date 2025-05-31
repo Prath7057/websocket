@@ -11,13 +11,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sender = $_POST['sender'];
     $message = $_POST['message'];
 
-    // Save message to database
-    $sql = "INSERT INTO chat_messages (sender, message) VALUES (:sender, :message)";
+   // Save message to database?
+    $sql = "INSERT INTO chat_messages_new (sender, message) VALUES (:sender, :message)";
     $stmt = $conn->prepare($sql);
-    
     $stmt->bindParam(':sender', $sender);
     $stmt->bindParam(':message', $message);
-    
     $stmt->execute();
 
     echo "Message sent";

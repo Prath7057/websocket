@@ -1,8 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Chat Application</title>
-    <link rel="icon" href="https://img.icons8.com/emoji/48/speech-balloon.png" type="image/png">
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <link
+      rel="icon"
+      href="https://img.icons8.com/emoji/48/speech-balloon.png"
+      type="image/png"
+    />
+
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -55,8 +61,8 @@
 
       .sender_user {
         background-color: #c3e17c;
-        padding:10px;
-        border-radius: 10px;;
+        padding: 10px;
+        border-radius: 10px;
       }
       #chat li.other {
         background-color: #e0e0e0;
@@ -112,12 +118,23 @@
         <option value="Omkar">Omkar</option>
         <option value="Atul">Atul</option>
         <option value="Harshal">Harshal</option>
+        <option value="Divya">Divya</option>
+        <option value="Tester">Tester</option>
       </select>
       <button onclick="setUsername()">Set Username</button>
     </div>
 
     <!-- Chat Section -->
-    <div id="chat-section" style="display:none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 12px 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); margin-bottom: 15px;">
+      <p style="margin: 0; font-size: 16px; font-weight: 500; color: #333;text-align: center;">
+        websocket च कोणाला काय बोलू नका...<span style="color: #d6336c; font-weight: bold;">Keep it Secret</span>
+      </p>
+      <button onclick="logout()" style="background-color: #dc3545; color: #fff; border: none; padding: 8px 16px; font-size: 14px; border-radius: 6px; cursor: pointer; transition: background-color 0.3s;">
+        Logout
+      </button>
+    </div>
+    
+    <div id="chat-section" style="display: none">
       <div id="sender-name" class="sender_user"></div>
 
       <ul id="chat"></ul>
@@ -132,28 +149,29 @@
     <input type="hidden" id="stored-username" />
 
     <script>
-      // change dynamically
-      const socket = new WebSocket("ws://192.168.1.17:8888");
+      const socket = new WebSocket("ws://192.168.1.16:8888");
 
       window.onload = function () {
-        const storedUsername = localStorage.getItem('username');
+        document.getElementById("message").focus();
+        const storedUsername = localStorage.getItem("username");
         if (storedUsername) {
-          document.getElementById('stored-username').value = storedUsername;
-          document.getElementById('username-selection').style.display = 'none';
-          document.getElementById('chat-section').style.display = 'flex';
-          document.getElementById('sender-name').textContent = storedUsername;
+          document.getElementById("stored-username").value = storedUsername;
+          document.getElementById("username-selection").style.display = "none";
+          document.getElementById("chat-section").style.display = "flex";
+          document.getElementById("sender-name").textContent = storedUsername;
           fetchMessages();
         }
+        document.getElementById("message").focus();
       };
 
       function setUsername() {
         const username = document.getElementById("username").value;
         if (username !== "Select Name") {
-          localStorage.setItem('username', username);
-          document.getElementById('stored-username').value = username;
-          document.getElementById('username-selection').style.display = 'none';
-          document.getElementById('chat-section').style.display = 'flex';
-          document.getElementById('sender-name').textContent = username;
+          localStorage.setItem("username", username);
+          document.getElementById("stored-username").value = username;
+          document.getElementById("username-selection").style.display = "none";
+          document.getElementById("chat-section").style.display = "flex";
+          document.getElementById("sender-name").textContent = username;
           fetchMessages();
         } else {
           alert("Please select a valid username.");
@@ -168,11 +186,13 @@
             chat.innerHTML = "";
             data.reverse().forEach((item) => {
               const li = document.createElement("li");
-              if (item.sender === document.getElementById('stored-username').value) {
-                li.classList.add('sender');
+              if (
+                item.sender === document.getElementById("stored-username").value
+              ) {
+                li.classList.add("sender");
                 li.textContent = item.message;
               } else {
-                li.classList.add('other');
+                li.classList.add("other");
                 li.innerHTML = `<strong>${item.sender}:</strong> ${item.message}`;
               }
               chat.appendChild(li);
@@ -186,14 +206,13 @@
         const sender = messageData[0];
         const message = messageData[1];
 
-        if (sender === document.getElementById('stored-username').value) {
-          li.classList.add('sender');
+        if (sender === document.getElementById("stored-username").value) {
+          li.classList.add("sender");
           li.textContent = message;
         } else {
-          li.classList.add('other');
+          li.classList.add("other");
           li.innerHTML = `<strong>${sender}:</strong> ${message}`;
         }
-
         document.getElementById("chat").prepend(li);
       };
 
@@ -203,27 +222,23 @@
 
         if (msg && socket.readyState === WebSocket.OPEN) {
           socket.send(`${sender}: ${msg}`);
-
-          fetch("save_message.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `sender=${sender}&message=${msg}`,
-          });
-
-          const li = document.createElement("li");
-          li.classList.add('sender');
-          li.textContent = msg;
-          document.getElementById("chat").prepend(li);
         }
 
+        document.getElementById("message").focus();
         document.getElementById("message").value = "";
       }
 
-      document.getElementById("message").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-          sendMessage();
-        }
-      });
+      document
+        .getElementById("message")
+        .addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            sendMessage();
+          }
+        });
+      function logout() {
+        localStorage.removeItem("username");
+        location.reload();
+      }
     </script>
   </body>
 </html>

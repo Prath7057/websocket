@@ -24,7 +24,7 @@ This is a real-time chat application built using **WebSocket** and **PHP** with 
 ## Installation
 
 To run this application on your local machine:
-
+added dynamic routes for error eess
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/yourusername/chat-app.git
